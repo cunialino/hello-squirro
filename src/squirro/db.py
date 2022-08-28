@@ -16,28 +16,27 @@ class ESDatabase:
             host = "localhost"
             port="9200"
         self.client = Elasticsearch("http://{host}:{port}".format(host=host, port=port), request_timeout=300)
-        if not self.client.indices.exists(index="hellosquirro"):
-            self.create_index()
 
-    def create_index(self):
-        mappings = {
-            "properties": {
-                "file_name": {"type": "text"},
-                "text": {"type": "text"},
-                "summary": {"type": "text"}
-            }
-        }
-        setting = {
-            "number_of_shards": 1, 
-            "number_of_replicas": 1
-        }
-        self.client.indices.create(index="hellosquirro", mappings=mappings, settings=setting)
+    def create_index(self, index: str, mappings: typing.Mapping[str, typing.Any], settings: typing.Mapping[str, int]) -> None:
+        if not self.client.indices.exists(index=index):
+            self.client.indices.create(index=index, mappings=mappings, settings=settings)
 
-    def insert_file(self, index: str, id: str, document: typing.Mapping[str, typing.Any]) -> typing.Optional[ObjectApiResponse[typing.Any]]:
+    def delete_index(self, index: str) -> None:
+        if self.client.indices.exists(index=index):
+            self.client.indices.delete(index=index)
+
+    def insert_file(self, index: str, document: typing.Mapping[str, str], id: typing.Optional[str] = None) -> typing.Optional[str]:
         try:
-            resp = self.client.index(index=index, id=id, document=document)
-            return resp
+            resp = self.client.index(index=index, document=document, id=id)
+            self.logger.info("inserted {}".format(resp['_id']))
+            return resp[ '_id' ]
         except Exception as e:
             self.logger.critical("Failed to insert document: {}".format(e))
 
-
+    def get_file(self, index: str, id: str) -> typing.Optional[ObjectApiResponse[typing.Any]]:
+        try:
+            doc = self.client.get_source(index=index, id=id)
+            self.logger.info("retrieved {}".format(doc))
+            return doc
+        except Exception as e:
+            self.logger.critical("Failed to retrieve document: {}".format(e))
