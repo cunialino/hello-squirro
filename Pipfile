@@ -5,10 +5,13 @@ name = "pypi"
 
 [packages]
 squirro = {editable = true, path = "."}
+nltk = "*"
 
 [dev-packages]
 sphinx = "*"
 sphinx-rtd-theme = "*"
+uvicorn = "*"
+elasticsearch-dsl = "*"
 
 [requires]
 python_version = "3.8"

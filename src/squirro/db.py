@@ -33,10 +33,18 @@ class ESDatabase:
         except Exception as e:
             self.logger.critical("Failed to insert document: {}".format(e))
 
-    def get_file(self, index: str, id: str) -> typing.Optional[ObjectApiResponse[typing.Any]]:
+    def get_file(self, index: str, id: str) -> typing.Optional[str]:
         try:
-            doc = self.client.get_source(index=index, id=id)
+            doc = self.client.get(index=index, id=id)
             self.logger.info("retrieved {}".format(doc))
-            return doc
+            return doc["_source"]['text']
+        except Exception as e:
+            self.logger.critical("Failed to retrieve document: {}".format(e))
+
+    def get_summary(self, index: str, id: str) -> typing.Optional[str]:
+        try:
+            doc = self.client.get(index=index, id=id)
+            self.logger.info("retrieved {}".format(doc))
+            return doc["_source"]['text']
         except Exception as e:
             self.logger.critical("Failed to retrieve document: {}".format(e))
