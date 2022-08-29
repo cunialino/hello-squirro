@@ -21,7 +21,7 @@ class Summary(BaseModel):
     
 @app.get("/")
 def root_page():
-    return "Hello everyone! Look for the APIs specs you sent :)"
+    return "Hello Squirro! You can go to http://127.0.0.1:8000/docs to see the APIs!"
 
 @app.post("/files/", response_model=Id)
 async def insert_item(item: File):
