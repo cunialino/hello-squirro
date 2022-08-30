@@ -4,14 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-squirro = {editable = true, path = "."}
-nltk = "*"
+nltk = "~=3.7"
+uvicorn = "~=0.18"
+elasticsearch = "~=8.4"
+fastapi = "~=0.81"
 
 [dev-packages]
 sphinx = "*"
 sphinx-rtd-theme = "*"
-uvicorn = "*"
-elasticsearch-dsl = "*"
+squirro = {editable = true, path = "."}
 
 [requires]
 python_version = "3.8"

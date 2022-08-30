@@ -1,0 +1,34 @@
+version: "3.8"
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+
+    volumes:
+      - src:/app/squirro
+    ports:
+      - 8000:80
+    depends_on:
+      - "es"
+    environment:
+      - ES_HOST_STRING=es
+      - ES_PORT=9200
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.4.0
+    container_name: es
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - http.port=9200
+      - xpack.security.enabled=false
+    user: elasticsearch
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data_volume:/usr/share/elasticsearch/data
+volumes:
+  es_data_volume:
+    driver: local
+  src:
+    driver: local
