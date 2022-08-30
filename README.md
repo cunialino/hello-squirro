@@ -31,3 +31,8 @@ The demo comes with some basic unittests in the tests/ folder, which I used to c
 Further tests should be implemented to check API responses against various, possibly wrong, input.
 
 To run them, you need to have install the python virtual env with the dev dependencies too.
+
+## Documentation
+
+Although I did provide a docs/ folder to document the code via [sphinx](https://www.sphinx-doc.org/en/master/), for time reasons I did not write the docstrings of the functions,
+hence the documentation would be empty, and I did not generate it.
