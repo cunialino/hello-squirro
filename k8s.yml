@@ -1,0 +1,154 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: es-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem # also Block (check the diff)
+  storageClassName: standard
+  accessModes: # how pods can access this
+    - ReadWriteOnce
+  hostPath:
+    path: es_data_volume
+    type: DirectoryOrCreate
+# https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: es-pvc
+  namespace: default
+  labels:
+    app: es-pvc
+spec:
+  volumeName: es-pv
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: squirrochallenge
+  namespace: default
+  labels:
+    app: squirrochallenge
+spec:
+  selector:
+    matchLabels:
+      app: squirrochallenge
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: squirrochallenge
+        tier: python
+    spec:
+      containers:
+        - name: squirrocc
+          image: ecunial/squirrocc:latest
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          env:
+            - name: ES_HOST_STRING
+              value: "es"
+            - name: ES_PORT
+              value: "9200"
+          ports:
+            - containerPort: 80
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: es
+  namespace: default
+  labels:
+    app: es
+spec:
+  selector:
+    matchLabels:
+      app: es
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: es
+    spec:
+      containers:
+        - name: es
+          image: docker.elastic.co/elasticsearch/elasticsearch:8.4.0
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 2000m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 1Gi
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: es-claim
+          env:
+            - name: discovery.type
+              value: "single-node"
+            - name: http.port
+              value: "9200"
+            - name: xpack.security.enabled
+              value: "false"
+          ports:
+            - containerPort: 9200
+      volumes:
+        - name: es-claim
+          persistentVolumeClaim:
+            claimName: es-pvc
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: squirrochallenge
+  namespace: default
+spec:
+  selector:
+    app: squirrochallenge
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: es
+  namespace: default
+spec:
+  selector:
+    app: es
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 9200
+      targetPort: 9200
+---
